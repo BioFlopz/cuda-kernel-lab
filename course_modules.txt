@@ -1,0 +1,20 @@
+Course modules
+Module 0 — Environment and hardware baseline ✓
+Module 1 — Execution model and verified vector addition ✓
+Module 2 — CUDA timing and effective bandwidth ✓
+Module 3 — CUDA memory model, coalescing, and transpose ✓ CURRENTLY COMPLETED
+Module 4 — Shared memory and tiled matrix multiplication ← NEXT
+Module 5 — Execution configuration, registers, and occupancy
+Module 6 — Parallel reduction
+Module 7 — Parallel prefix scan
+Module 8 — Convolution, constant memory, and tiled convolution
+Module 9 — Atomic operations and histograms
+Module 10 — Sparse parallel methods
+Module 11 — Host-device transfers, streams, and overlap
+Module 12 — Profiling and roofline performance engineering
+Module 13 — Instruction-level analysis: PTX and SASS
+Module 14 — Inline PTX and low-level control
+Module 15 — Deep-learning and tensor-operation foundations
+Module 16 — Winograd convolution capstone
+Module 17 — CUDA Transformer decode-kernel library
+Module 18 — Portfolio hardening and open-source contribution

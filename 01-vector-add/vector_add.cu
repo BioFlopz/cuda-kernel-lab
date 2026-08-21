@@ -8,7 +8,7 @@
 
 #define CUDA_CHECK(call)                                                   \
     do {                                                                   \
-        cudaError_t error = (call);                                        \
+        cudaError_t error = call;                                        \
         if (error != cudaSuccess) {                                        \
             std::cerr << "CUDA error at " << __FILE__ << ":" << __LINE__   \
                       << ": " << cudaGetErrorString(error) << '\n';         \
@@ -65,13 +65,28 @@ int main()
 
     const int blocks = (n + (threads_per_block - 1)) / threads_per_block;
 
-    vector_add<<<blocks, threads_per_block>>>(d_a, d_b, d_c, n);
+    cudaEvent_t start;
+    cudaEvent_t stop;
+    float elapsed_milliseconds = 0.0f;
 
-    // Checks whether the launch configuration itself was valid.
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+
+    CUDA_CHECK(cudaEventRecord(start, 0));
+
+    vector_add<<<blocks, threads_per_block>>>(d_a, d_b, d_c, n);
     CUDA_CHECK(cudaGetLastError());
 
-    // Waits for execution and reports asynchronous kernel errors.
-    CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaEventRecord(stop, 0));
+    CUDA_CHECK(cudaEventSynchronize(stop));
+
+    CUDA_CHECK(cudaEventElapsedTime(
+        &elapsed_milliseconds,
+        start,
+        stop));
+
+    CUDA_CHECK(cudaEventDestroy(start));
+    CUDA_CHECK(cudaEventDestroy(stop));
 
     CUDA_CHECK(cudaMemcpy(
         h_c.data(), d_c, bytes, cudaMemcpyDeviceToHost));
@@ -94,6 +109,14 @@ int main()
         }
     }
 
+    const double bytes_read = 2.0 * static_cast<double>(n) * sizeof(float);
+
+    const double bytes_written = static_cast<double>(n) * sizeof(float);
+
+    const double elapsed_seconds = static_cast<double>(elapsed_milliseconds) / 1000.0;
+
+    const double effective_bandwidth_gbps = ((bytes_read + bytes_written) / 1.0e9) / elapsed_seconds;
+
     CUDA_CHECK(cudaFree(d_a));
     CUDA_CHECK(cudaFree(d_b));
     CUDA_CHECK(cudaFree(d_c));
@@ -107,6 +130,15 @@ int main()
               << "Maximum error:     " << maximum_error << '\n'
               << "Verification:      "
               << (mismatches == 0 ? "PASS" : "FAIL") << '\n';
+
+    std::cout << "Kernel time:        "
+              << elapsed_milliseconds << " ms\n"
+              << "Bytes read:         "
+              << bytes_read << '\n'
+              << "Bytes written:      "
+              << bytes_written << '\n'
+              << "Effective bandwidth: "
+              << effective_bandwidth_gbps << " GB/s\n";
 
     return mismatches == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
